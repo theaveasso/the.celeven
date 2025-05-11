@@ -4,9 +4,10 @@ project(celeven C)
 set(CMAKE_C_STANDARD 11)
 
 add_library(${PROJECT_NAME} SHARED
-        src/cel_vulkan.c
         src/cel_core.c
-        src/cel_memory.c)
+        src/cel_log.c
+        src/cel_memory.c
+        src/cel_vulkan.c)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC volk::volk GPUOpen::VulkanMemoryAllocator glfw)
 

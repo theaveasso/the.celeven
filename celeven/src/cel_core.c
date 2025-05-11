@@ -1,4 +1,5 @@
 #include "cel.h"
+#include "cel_log.h"
 #include "cel_vulkan.h"
 
 #include <GLFW/glfw3.h>
@@ -44,6 +45,8 @@ bool application_init(CELgame *game) {
     if (!state.game_inst->game_init(state.game_inst)) { return false; }
 
     is_initialized = true;
+
+    CEL_INFO("application initialize successfully!");
     return true;
 }
 
