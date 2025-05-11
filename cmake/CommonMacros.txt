@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.28)
+
+# Standard dependency fetching (for libraries with proper CMake targets)
+macro(fetch_dep dep repo tag)
+    if (NOT TARGET ${dep})
+        FetchContent_Declare(
+            ${dep}
+            GIT_REPOSITORY ${repo}
+            GIT_TAG ${tag}
+        )
+        FetchContent_MakeAvailable(${dep})
+    endif()
+endmacro()
+
+# Header-only library fetching (creates an INTERFACE target if needed)
+macro(fetch_header_lib dep repo tag)
+    fetch_dep(${dep} ${repo} ${tag})
+
+    if (NOT TARGET ${dep})
+        add_library(${dep} INTERFACE)
+        target_include_directories(${dep} INTERFACE "${${dep}_SOURCE_DIR}")
+    endif()
+endmacro()
