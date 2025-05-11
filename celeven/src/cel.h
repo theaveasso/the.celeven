@@ -46,6 +46,13 @@ struct CELmemory {
     CELarena persistent_arena;
 };
 
+typedef struct CELconfig CELconfig;
+struct CELconfig {
+    uint16_t width;
+    uint16_t height;
+    const char *title;
+};
+
 typedef struct CELgame CELgame;
 
 typedef bool (*CELgame_init_fn)(struct CELgame *game_inst);
@@ -54,6 +61,7 @@ typedef bool (*CELgame_draw_fn)(struct CELgame *game_inst);
 typedef bool (*CELgame_destroy_fn)(struct CELgame *game_inst);
 
 struct CELgame {
+    CELconfig config;
     CELgame_init_fn game_init;
     CELgame_update_fn game_update;
     CELgame_draw_fn game_draw;

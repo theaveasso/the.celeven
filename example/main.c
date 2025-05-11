@@ -8,6 +8,10 @@
 GlobalVariable unsigned char buffer[PERSISTENT_STORAGE_SIZE + TRANSIENT_STORAGE_SIZE];
 
 bool game_create(CELgame *game) {
+    game->config.width  = 1920;
+    game->config.height = 1080;
+    game->config.title  = "CEL";
+
     game->game_init    = game_init;
     game->game_update  = game_update;
     game->game_draw    = game_draw;
