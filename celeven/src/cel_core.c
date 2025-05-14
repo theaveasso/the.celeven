@@ -40,7 +40,7 @@ bool application_init(CELgame *game) {
     glfwSetWindowSizeCallback(state.window, window_size_callback);
 
     // setup vulkan
-    if (!cel_vulkan_init()) { return false; };
+    if (!cel_vulkan_init(state.window)) { return false; };
 
     if (!state.game_inst->game_init(state.game_inst)) { return false; }
 
@@ -54,8 +54,11 @@ bool application_run() {
     while (!glfwWindowShouldClose(state.window))
     {
         glfwPollEvents();
+
+        if (!state.game_inst->game_draw(state.game_inst)) { return false; }
     }
 
+    cel_vulkan_fini();
     return true;
 }
 

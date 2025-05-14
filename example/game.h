@@ -1,5 +1,13 @@
 #pragma once
+
 #include <cel.h>
+#include <cel_vulkan.h>
+
+typedef struct GameState GameState;
+struct GameState {
+    VkFormat format;
+    CELimage_handle draw_texture;
+};
 
 bool game_init(CELgame *game);
 

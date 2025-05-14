@@ -36,10 +36,17 @@ typedef unsigned char bool;
     #endif
 #endif//__cplusplus
 
-#ifndef DEFAULT_ALIGNMENT
+#if !defined(DEFAULT_ALIGNMENT)
     #define DEFAULT_ALIGNMENT (2 * sizeof(void *))
 #endif// DEFAULT_ALIGNMENT
 
 #define GlobalVariable static
 #define LocalPersistent static
 #define Internal static
+
+#if !defined(CEL_HANDLE_DEFINE)
+    #define CEL_HANDLE_DEFINE(name) \
+        typedef struct CEL##name {        \
+            uint32_t idx;           \
+        } CEL##name;
+#endif// CEL_HANDLE_DEFINE

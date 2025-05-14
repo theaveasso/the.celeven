@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 3.28)
-project(celeven C)
+project(celeven C CXX)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(${PROJECT_NAME} SHARED
+        src/vk_mem_alloc.cpp
         src/cel_core.c
         src/cel_log.c
         src/cel_memory.c

@@ -48,9 +48,11 @@ struct CELmemory {
 
 typedef struct CELconfig CELconfig;
 struct CELconfig {
-    uint16_t width;
-    uint16_t height;
     const char *title;
+    uint32_t width;
+    uint32_t height;
+    uint32_t render_width;
+    uint32_t render_height;
 };
 
 typedef struct CELgame CELgame;
@@ -68,6 +70,7 @@ struct CELgame {
     CELgame_destroy_fn game_destroy;
 
     CELmemory state;
+    void *user_data;
 };
 
 CELAPI inline bool is_power_of_two(uintptr_t x) { return (x & (x - 1)) == 0; }
