@@ -38,6 +38,11 @@ CEL_HANDLE_DEFINE(image_handle);
 CEL_HANDLE_DEFINE(sampler_handle);
 CEL_HANDLE_DEFINE(program_handle);
 
+typedef enum CELrenderer_type
+{
+    RENDERER_SPRITE
+} CELrenderer_type;
+
 typedef struct CELrgba CELrgba;
 struct CELrgba {
     float r;
@@ -90,6 +95,10 @@ struct CELvk_program {
     VkPipelineBindPoint bind_point;
     VkPipelineLayout layout;
     VkDescriptorSetLayout set_layout;
+
+    VkShaderModule *shader_modules;
+    VkShaderStageFlags *shader_stages;
+    uint32_t stage_count;
 };
 
 CELAPI CELbuffer_handle celvk_staging_buffer_create(VmaAllocator *allocator, VkDeviceSize size, VkBufferUsageFlags usages);
@@ -105,10 +114,10 @@ CELAPI void celvk_sampler_destroy(VkDevice *device, const CELsampler_handle *han
 
 CELAPI uint32_t *celvk_load_shader_w_spv(const char *path, size_t *size);
 
-CELAPI VkPipeline celvk_graphics_pipeline_create(VkDevice *device, const VkPipelineRenderingCreateInfo *rendering_create_info, const CELvk_program *program);
+CELAPI VkPipeline celvk_graphics_pipeline_create(VkDevice *device, const VkPipelineRenderingCreateInfo *rendering_create_info, const CELprogram_handle *program);
 CELAPI void celvk_pipeline_destroy(VkDevice *device, VkPipeline *pipeline);
 
-CELAPI CELprogram_handle celvk_program_create(VkDevice *device, VkPipelineBindPoint bind_point, size_t push_constant_size);
+CELAPI CELprogram_handle celvk_program_create(VkDevice *device, VkPipelineBindPoint bind_point, size_t push_constant_size, const char **shader_paths, uint32_t shader_count);
 CELAPI void celvk_program_destroy(VkDevice *device, const CELprogram_handle *handle);
 
 bool cel_vulkan_init(struct GLFWwindow *window);

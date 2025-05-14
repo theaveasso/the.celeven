@@ -413,7 +413,7 @@ VkCommandBuffer celvk_begin_draw() {
     VK_CHECK(vkResetCommandBuffer(frame->primary_command_buffer, 0));
 
     VkCommandBufferBeginInfo begin_info = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-    begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    begin_info.flags                    = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
     VK_CHECK(vkBeginCommandBuffer(frame->primary_command_buffer, &begin_info));
 
@@ -1279,21 +1279,146 @@ uint32_t *celvk_load_shader_w_spv(const char *path, size_t *size) {
     return buffer;
 }
 
-VkPipeline celvk_graphics_pipeline_create(VkDevice *device, const VkPipelineRenderingCreateInfo *rendering_create_info, const CELvk_program *program) {
+VkPipeline celvk_graphics_pipeline_create(VkDevice *device, const VkPipelineRenderingCreateInfo *rendering_create_info, const CELprogram_handle *program_handle) {
     VkGraphicsPipelineCreateInfo create_info = {VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
 
+    CELvk_program *program = &vk_programs[program_handle->idx];
+    assert(program->stage_count > 0 && "failed shader stage should larger than 0");
+    if (program->stage_count <= 0) { return NULL; }
+
+    VkPipelineShaderStageCreateInfo *stages = cel_arena_alloc(&vk_arena, sizeof(VkPipelineShaderStageCreateInfo) * program->stage_count);
+    for (uint32_t i = 0; i < program->stage_count; ++i)
+    {
+        stages[i] = (VkPipelineShaderStageCreateInfo){
+            .sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .stage  = program->shader_stages[i],
+            .module = program->shader_modules[i],
+            .pName  = "main",
+        };
+    }
+
+    VkPipelineVertexInputStateCreateInfo vertex_input_state = {VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
+    vertex_input_state.vertexBindingDescriptionCount        = 0;
+    vertex_input_state.pVertexBindingDescriptions           = NULL;
+    vertex_input_state.vertexAttributeDescriptionCount      = 0;
+    vertex_input_state.pVertexAttributeDescriptions         = NULL;
+
+    VkPipelineInputAssemblyStateCreateInfo input_assembly_state = {VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
+    input_assembly_state.topology                               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    input_assembly_state.primitiveRestartEnable                 = false;
+
+    VkPipelineTessellationStateCreateInfo tessellation_state = {VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO};
+    tessellation_state.patchControlPoints                    = 1;
+
+    VkPipelineViewportStateCreateInfo viewport_state = {VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
+    viewport_state.viewportCount                     = 1;
+    viewport_state.pViewports                        = NULL;
+    viewport_state.scissorCount                      = 1;
+    viewport_state.pScissors                         = NULL;
+
+    VkPipelineRasterizationStateCreateInfo rasterization_state = {VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
+    rasterization_state.depthClampEnable                       = false;
+    rasterization_state.rasterizerDiscardEnable                = false;
+    rasterization_state.polygonMode                            = VK_POLYGON_MODE_FILL;
+    rasterization_state.cullMode                               = VK_CULL_MODE_NONE;
+    rasterization_state.frontFace                              = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterization_state.depthBiasEnable                        = false;
+    rasterization_state.depthBiasConstantFactor                = 0.0f;
+    rasterization_state.depthBiasClamp                         = 0.0f;
+    rasterization_state.depthBiasSlopeFactor                   = 0.0f;
+    rasterization_state.lineWidth                              = 1.0f;
+
+    VkPipelineMultisampleStateCreateInfo multisample_state = {VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
+    multisample_state.rasterizationSamples                 = VK_SAMPLE_COUNT_1_BIT;
+    multisample_state.sampleShadingEnable                  = false;
+    multisample_state.minSampleShading                     = 1.0f;
+    multisample_state.pSampleMask                          = NULL;
+    multisample_state.alphaToCoverageEnable                = false;
+    multisample_state.alphaToOneEnable                     = false;
+
+    VkPipelineDepthStencilStateCreateInfo depth_stencil_state = {VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
+    depth_stencil_state.depthTestEnable                       = false;
+    depth_stencil_state.depthWriteEnable                      = false;
+    depth_stencil_state.depthCompareOp                        = VK_COMPARE_OP_LESS;
+    depth_stencil_state.depthBoundsTestEnable                 = false;
+    depth_stencil_state.stencilTestEnable                     = false;
+    depth_stencil_state.minDepthBounds                        = 0.0f;
+    depth_stencil_state.maxDepthBounds                        = 1.0f;
+
+    VkPipelineColorBlendAttachmentState color_attachment = {
+        .blendEnable         = false,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .colorBlendOp        = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp        = VK_BLEND_OP_ADD,
+        .colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+    };
+    VkPipelineColorBlendStateCreateInfo color_blend_state = {VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};
+    color_blend_state.logicOpEnable                       = false;
+    color_blend_state.logicOp                             = VK_LOGIC_OP_COPY;
+    color_blend_state.attachmentCount                     = 1;
+    color_blend_state.pAttachments                        = &color_attachment;
+    color_blend_state.blendConstants[0]                   = 0.0f;
+    color_blend_state.blendConstants[1]                   = 0.0f;
+    color_blend_state.blendConstants[2]                   = 0.0f;
+    color_blend_state.blendConstants[3]                   = 0.0f;
+
+    VkDynamicState dynamic_states[] = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
+    };
+    VkPipelineDynamicStateCreateInfo dynamic_state = {VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
+    dynamic_state.dynamicStateCount                = 2;
+    dynamic_state.pDynamicStates                   = dynamic_states;
+
+    VkGraphicsPipelineCreateInfo pipeline_create_info = {VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+    pipeline_create_info.pNext                        = rendering_create_info;
+    pipeline_create_info.stageCount                   = program->stage_count;
+    pipeline_create_info.pStages                      = stages;
+    pipeline_create_info.pVertexInputState            = &vertex_input_state;
+    pipeline_create_info.pInputAssemblyState          = &input_assembly_state;
+    pipeline_create_info.pTessellationState           = &tessellation_state;
+    pipeline_create_info.pViewportState               = &viewport_state;
+    pipeline_create_info.pRasterizationState          = &rasterization_state;
+    pipeline_create_info.pMultisampleState            = &multisample_state;
+    pipeline_create_info.pDepthStencilState           = &depth_stencil_state;
+    pipeline_create_info.pColorBlendState             = &color_blend_state;
+    pipeline_create_info.pDynamicState                = &dynamic_state;
+    pipeline_create_info.layout                       = program->layout;
+
     VkPipeline pipeline = NULL;
+
+    for (uint32_t i = 0; i < program->stage_count; ++i) { vkDestroyShaderModule(*device, program->shader_modules[i], NULL); }
+
     return pipeline;
 }
 
 void celvk_pipeline_destroy(VkDevice *device, VkPipeline *pipeline) {
 }
 
-CELprogram_handle celvk_program_create(VkDevice *device, VkPipelineBindPoint bind_point, size_t push_constant_size) {
+CELprogram_handle celvk_program_create(VkDevice *device, VkPipelineBindPoint bind_point, size_t push_constant_size, const char **shader_paths, uint32_t shader_count) {
     assert(vk_program_count < CELVK_MAX_PROGRAM_COUNT && "vulkan error: exceeded max program count");
 
     CELvk_program program = {0};
-    program.bind_point    = bind_point;
+    program.stage_count   = shader_count;
+
+    program.shader_modules = cel_arena_alloc(&vk_arena, sizeof(VkShaderModule) * shader_count);
+    uint32_t **shader_code = cel_arena_alloc(&vk_arena, sizeof(uint32_t *) * shader_count);
+    size_t *shader_sizes   = cel_arena_alloc(&vk_arena, sizeof(size_t) * shader_count);
+    for (uint32_t i = 0; i < shader_count; ++i)
+    {
+        shader_code[i] = celvk_load_shader_w_spv(shader_paths[i], &shader_sizes[i]);
+        assert(shader_code[i] && "vulkan error: failed to load shader from path");
+
+        VkShaderModuleCreateInfo shader_module_create_info = {VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+        shader_module_create_info.codeSize                 = shader_sizes[i];
+        shader_module_create_info.pCode                    = shader_code[i];
+        VK_CHECK(vkCreateShaderModule(*device, &shader_module_create_info, NULL, &program.shader_modules[i]));
+    }
+
+    program.bind_point = bind_point;
 
     VkPushConstantRange push_constant_range = {
         .stageFlags = VK_SHADER_STAGE_ALL,
