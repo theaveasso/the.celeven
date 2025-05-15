@@ -49,6 +49,7 @@ struct CELmemory {
 typedef struct CELconfig CELconfig;
 struct CELconfig {
     const char *title;
+    char *base_path;
     uint32_t width;
     uint32_t height;
     uint32_t render_width;
@@ -118,3 +119,10 @@ CELAPI void pool_debug_print(CELpool *p, const char *label);
 
 CELAPI bool application_init(CELgame *game);
 CELAPI bool application_run();
+
+CELAPI const char *cel_filename_from_path(const char *path);
+CELAPI void celfs_join_path(char *out, size_t out_size, const char *base, const char *relative_path);
+CELAPI int celfs_set_current_dir(const char *path);
+CELAPI int celfs_get_current_dir(char *buffer, size_t size);
+CELAPI int celfs_resolve_full_path(char *out, size_t out_size, const char *relative_path, const char *path);
+CELAPI void celfs_get_exec_dir(char *out, size_t out_size);

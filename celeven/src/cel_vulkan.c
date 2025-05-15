@@ -103,6 +103,8 @@ struct CELvk_ctx {
 
     size_t frame_count;
 
+    const char *engine_path;
+
     bool raytracing_supported;
     bool mesh_shading_supported;
 };
@@ -183,7 +185,9 @@ Internal void vk_samplers_destroy(VkDevice *device);
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type, const VkDebugUtilsMessengerCallbackDataEXT *callback_data, void *user_data);
 #endif
 
-bool cel_vulkan_init(GLFWwindow *window) {
+bool cel_vulkan_init(GLFWwindow *window, CELvk_state *state) {
+    vk_ctx.engine_path = state->engine_path;
+
     cel_arena_init(&vk_arena, vkbuf, CELVK_STORAGE_SIZE);
 
     VK_CHECK(volkInitialize());
@@ -234,7 +238,7 @@ bool cel_vulkan_init(GLFWwindow *window) {
 #endif
 
     VkApplicationInfo app_info  = {VK_STRUCTURE_TYPE_APPLICATION_INFO};
-    app_info.pApplicationName   = "";
+    app_info.pApplicationName   = state->app_name;
     app_info.applicationVersion = 0;
     app_info.pEngineName        = "CEL Engine";
     app_info.engineVersion      = 0;
@@ -1240,6 +1244,9 @@ void vk_samplers_destroy(VkDevice *device) {
 }
 
 uint32_t *celvk_load_shader_w_spv(const char *path, size_t *size) {
+    char cwd[FS_PATH_MAX];
+    getcwd(cwd, sizeof(cwd));
+    printf("current workider: %s\n", cwd);
     FILE *file;
     fopen_s(&file, path, "rb");
     if (!file)
@@ -1436,7 +1443,20 @@ CELprogram_handle celvk_program_create(VkDevice *device, VkPipelineBindPoint bin
     VK_CHECK(vkCreatePipelineLayout(*device, &pipeline_layout_create_info, NULL, &program.layout));
     uint32_t index     = vk_program_count++;
     vk_programs[index] = program;
+
+    program.pipeline = celvk_graphics_pipeline_create(device, &(VkPipelineRenderingCreateInfo){}, &(CELprogram_handle){.idx = index});
+
     return (CELprogram_handle){.idx = index};
+}
+
+CELAPI CELprogram_handle celvk_sprite_renderer_create(VkFormat format) {
+    char *vert = cel_arena_alloc(&vk_arena, FS_PATH_MAX);
+    char *frag = cel_arena_alloc(&vk_arena, FS_PATH_MAX);
+    snprintf(vert, sizeof(vert), "%s/%s", vk_ctx.engine_path, "/builtin_sprite.vert.glsl.spv");
+    snprintf(vert, sizeof(frag), "%s/%s", vk_ctx.engine_path, "/builtin_sprite.frag.glsl.spv");
+    const char *shader_paths[2] = {vert, frag};
+
+    return celvk_program_create(&vk_ctx.device.handle, VK_PIPELINE_BIND_POINT_GRAPHICS, sizeof(CELsprite_renderer_pc), shader_paths, 2);
 }
 
 CELAPI void celvk_program_destroy(VkDevice *device, const CELprogram_handle *handle) {

@@ -8,11 +8,12 @@
 GlobalVariable unsigned char buffer[PERSISTENT_STORAGE_SIZE + TRANSIENT_STORAGE_SIZE];
 
 bool game_create(CELgame *game) {
-    game->config.title  = "CEL";
-    game->config.width  = 1920;
-    game->config.height = 1080;
-    game->config.render_width= 640;
-    game->config.render_height= 360;
+    game->config.title         = "CEL";
+    game->config.base_path     = "example\\resources"; // _WIN32 specifics
+    game->config.width         = 1920;
+    game->config.height        = 1080;
+    game->config.render_width  = 640;
+    game->config.render_height = 360;
 
     game->game_init    = game_init;
     game->game_update  = game_update;

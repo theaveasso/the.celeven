@@ -4,14 +4,22 @@
 
 #include <GLFW/glfw3.h>
 
+typedef struct CELfs_path CELfs_path;
+struct CELfs_path {
+    const char *engine_base_path;
+    const char *user_base_path;
+};
+
 typedef struct CELapp_state CELapp_state;
 struct CELapp_state {
     CELgame *game_inst;
+    CELfs_path paths;
     GLFWwindow *window;
+
+    const char *title;
 
     uint32_t actual_width;
     uint32_t actual_height;
-    const char *title;
 };
 
 GlobalVariable bool is_initialized = false;
@@ -27,6 +35,21 @@ bool application_init(CELgame *game) {
     state.actual_width  = game->config.width;
     state.actual_height = game->config.height;
     state.title         = game->config.title;
+
+    state.paths.user_base_path = game->config.base_path ? game->config.base_path : "";
+
+    char engine_path[FS_PATH_MAX];
+    char user_path[FS_PATH_MAX];
+
+    char cwd[FS_PATH_MAX];
+    celfs_get_current_dir(cwd, sizeof(cwd));
+    CEL_INFO("current working directory %s", cwd);
+
+    snprintf(engine_path, sizeof(engine_path), "%s%c..%c..%cresources", cwd, FS_PATH_SEP, FS_PATH_SEP, FS_PATH_SEP);
+    snprintf(user_path, sizeof(user_path), "%s%c..%c..%c%s", cwd, FS_PATH_SEP, FS_PATH_SEP, FS_PATH_SEP, state.paths.user_base_path);
+
+    state.paths.engine_base_path = engine_path;
+    state.paths.user_base_path   = user_path;
 
     if (!glfwInit()) { return false; }
 

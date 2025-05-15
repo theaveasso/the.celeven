@@ -44,9 +44,18 @@ typedef unsigned char bool;
 #define LocalPersistent static
 #define Internal static
 
+#if defined(_WIN32)
+    #include <direct.h>
+    #define fs_chdir _chdir
+    #define fs_getcwd _getcwd
+    #define FS_PATH_MAX 1024
+    #define FS_PATH_SEP '\\'
+#else
+#endif
+
 #if !defined(CEL_HANDLE_DEFINE)
     #define CEL_HANDLE_DEFINE(name) \
-        typedef struct CEL##name {        \
+        typedef struct CEL##name {  \
             uint32_t idx;           \
         } CEL##name;
 #endif// CEL_HANDLE_DEFINE

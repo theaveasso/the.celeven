@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(${PROJECT_NAME} SHARED
         src/vk_mem_alloc.cpp
+        src/cel.c
         src/cel_core.c
         src/cel_log.c
         src/cel_memory.c
@@ -18,3 +19,4 @@ target_link_libraries(${PROJECT_NAME} PUBLIC volk::volk GPUOpen::VulkanMemoryAll
 target_include_directories(${PROJECT_NAME} PUBLIC src)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE BUILD_SHARED)
+add_dependencies(${PROJECT_NAME} celshader_compile)

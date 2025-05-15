@@ -14,7 +14,9 @@ bool game_init(CELgame *game) {
             .usage         = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
             .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT});
 
-    game->user_data = state;
+    state->sprite_renderer = celvk_sprite_renderer_create();
+
+    game->user_data        = state;
     return true;
 }
 
@@ -24,7 +26,7 @@ bool game_update(CELgame *game) {
 }
 
 bool game_draw(CELgame *game) {
-    GameState *state = (GameState*) game->user_data;
+    GameState *state = (GameState *) game->user_data;
 
     VkCommandBuffer cmd = celvk_begin_draw();
 

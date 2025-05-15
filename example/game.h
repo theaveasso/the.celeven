@@ -7,6 +7,7 @@ typedef struct GameState GameState;
 struct GameState {
     VkFormat format;
     CELimage_handle draw_texture;
+    CELprogram_handle sprite_renderer;
 };
 
 bool game_init(CELgame *game);
